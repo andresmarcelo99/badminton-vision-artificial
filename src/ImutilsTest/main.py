@@ -7,35 +7,20 @@ import imutils
 import cv2 as cv
 from pyfirmata import Arduino, util
 
-board = Arduino('COM3')
+board = Arduino('COM4')
 
 iterator = util.Iterator(board)
 iterator.start()
 
 pin = 7
 
-
-# def draw_grid(img, line_color=(0, 255, 0), thickness=1, type_=cv2.LINE_AA, pxstep=200):
-#     '''(ndarray, 3-tuple, int, int) -> void
-#     draw gridlines on img
-#     line_color:
-#         BGR representation of colour
-#     thickness:
-#         line thickness
-#     type:
-#         8, 4 or cv2.LINE_AA
-#     pxstep:
-#         grid line frequency in pixels
-#     '''
-#     x = pxstep
-#     y = pxstep
-#     while x < img.shape[1]:
-#         cv2.line(img, (x, 0), (x, img.shape[0]), color=line_color, lineType=type_, thickness=thickness)
-#         x += pxstep
-
-#     while y < img.shape[0]:
-#         cv2.line(img, (0, y), (img.shape[1], y), color=line_color, lineType=type_, thickness=thickness)
-#         y += pxstep
+def isInRange(x, y, z):
+    print(x,y,z)
+    if x>200 and x<220 and y>165 and y<190 and z>330 and z<355:
+        print('PERSON DETECTED!!!! ')
+        return True
+    else:
+        return False
 
 cap = cv.VideoCapture(0)
 if not cap.isOpened():
@@ -64,19 +49,21 @@ while(True):
     (rects, weights) = hog.detectMultiScale(frame, winStride=(4, 4),
         padding=(8, 8), scale=1.05) 
 
-    if(len(rects)>0):
+    if(len(rects)>0 and isInRange(rects[0][0], rects[0][2], rects[0][3])):
         isDetecting=True
     else:
         isDetecting=False
 
     for (x, y, w, h) in rects:
+        # print(x, y,w, h)
         cv.rectangle(ret, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
     rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
-    pick = non_max_suppression(rects, probs=None, overlapThresh=0.85)
+    pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
     
     for (xA, yA, xB, yB) in pick:
         cv.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
+
         board.digital[pin].write(1) 
         out.write(frame.astype('uint8'))
 
