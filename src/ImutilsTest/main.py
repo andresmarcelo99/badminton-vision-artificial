@@ -4,10 +4,21 @@ from imutils import paths
 import numpy as np
 import argparse
 import imutils
+import time
 import cv2 as cv
+
+
 from pyfirmata import Arduino, util
 
 board = Arduino('COM4')
+incomingByte = 0
+servo0 = 600
+servo180 = 2100
+servo90 = 1350
+inc = 20
+pos = servo0
+servo = board.get_pin('d:8:s')
+pulseInterval=2000
 
 iterator = util.Iterator(board)
 iterator.start()
@@ -21,6 +32,13 @@ def isInRange(x, y, z):
         return True
     else:
         return False
+
+def moveServo():
+    servo.write(1)
+    time.sleep(2)
+    servo.write(0)
+    time.sleep(2)
+    print("servo moved?")
 
 cap = cv.VideoCapture(0)
 if not cap.isOpened():
@@ -41,7 +59,7 @@ isDetecting = False
 while(True):
 
     board.digital[pin].write(1 if isDetecting else 0) 
-   
+    moveServo()
     ret, frame = cap.read()
     frame = imutils.resize(frame, width=min(900, frame.shape[1]))
     
